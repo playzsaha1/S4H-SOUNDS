@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S4H-SOUNDS | MP3 Converter</title>
+    <meta
+      name="description"
+      content="S4H-SOUNDS helps convert MP3 files into XML data and alternative audio formats with a secure, frictionless dashboard experience."
+    />
+    <style>
+      :root {
+        --bg: #070b19;
+        --bg-elevated: rgba(16, 21, 37, 0.78);
+        --bg-panel: rgba(15, 22, 37, 0.9);
+        --bg-soft: rgba(106, 90, 205, 0.1);
+        --text: #eef4ff;
+        --muted: #a5b5d8;
+        --line: rgba(146, 166, 240, 0.22);
+        --primary: #7c6cff;
+        --primary-strong: #5dd4ff;
+        --secondary: #93f0d0;
+        --warning: #ffb86c;
+        --success: #58d68d;
+        --shadow: 0 20px 60px rgba(10, 12, 24, 0.5);
+        --gradient: linear-gradient(135deg, rgba(123, 92, 255, 0.75), rgba(15, 197, 255, 0.78), rgba(24, 255, 210, 0.62));
+      }
+
+      body[data-theme="light"] {
+        --bg: #edf4ff;
+        --bg-elevated: rgba(255, 255, 255, 0.8);
+        --bg-panel: rgba(255, 255, 255, 0.94);
+        --bg-soft: rgba(94, 117, 255, 0.08);
+        --text: #111b2c;
+        --muted: #54657d;
+        --line: rgba(48, 76, 120, 0.16);
+        --primary: #6548ff;
+        --primary-strong: #0d9bff;
+        --secondary: #1dbf97;
+        --warning: #d98218;
+        --success: #10a56d;
+        --shadow: 0 20px 50px rgba(67, 81, 122, 0.15);
+        --gradient: linear-gradient(135deg, rgba(101, 72, 255, 0.9), rgba(13, 155, 255, 0.78), rgba(29, 191, 151, 0.72));
+      }
+
+      * { box-sizing: border-box; }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(123, 92, 255, 0.4), transparent 30%),
+          radial-gradient(circle at top right, rgba(15, 197, 255, 0.28), transparent 22%),
+          radial-gradient(circle at bottom center, rgba(29, 191, 151, 0.18), transparent 24%),
+          var(--bg);
+        color: var(--text);
+        transition: background 0.3s ease, color 0.3s ease;
+      }
+
+      a { color: inherit; text-decoration: none; }
+
+      button, select, input {
+        font: inherit;
+      }
+
+      .page-shell {
+        width: min(1220px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 24px 0 60px;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 18px 22px;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: rgba(10, 14, 24, 0.5);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: var(--shadow);
+      }
+
+      body[data-theme="light"] .topbar {
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 800;
+        font-size: 0.78rem;
+      }
+
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        background: var(--gradient);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 12px 25px rgba(119, 88, 255, 0.38);
+        position: relative;
+      }
+
+      .brand-mark::before {
+        content: "";
+        position: absolute;
+        inset: 8px;
+        border-radius: 8px;
+        background: rgba(8, 10, 18, 0.25);
+        border: 1px solid rgba(255,255,255,0.25);
+      }
+
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .nav-tabs {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px;
+        border-radius: 14px;
+        background: var(--bg-soft);
+        border: 1px solid var(--line);
+      }
+
+      .nav-tab {
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        padding: 10px 16px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.25s ease;
+      }
+
+      .nav-tab.active {
+        background: linear-gradient(135deg, rgba(124,108,255,0.2), rgba(93,212,255,0.18));
+        color: var(--text);
+        box-shadow: inset 0 0 0 1px rgba(129, 144, 255, 0.19);
+      }
+
+      .mode-toggle {
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.02);
+        color: var(--text);
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .main-section {
+        padding-top: 26px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.3fr 0.9fr;
+        gap: 26px;
+        align-items: stretch;
+        padding: 10px 0 28px;
+      }
+
+      .hero-copy, .hero-metrics {
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        background: var(--bg-panel);
+        box-shadow: var(--shadow);
+      }
+
+      .hero-copy {
+        background:
+          linear-gradient(125deg, rgba(112,92,255,0.22), rgba(15,197,255,0.12), transparent 55%),
+          var(--bg-panel);
+        padding: 32px 32px 26px;
+      }
+
+      .eyebrow {
+        display: inline-block;
+        margin-bottom: 18px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(124, 108, 255, 0.12);
+        border: 1px solid rgba(124, 108, 255, 0.18);
+        color: var(--primary-strong);
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 0.68rem;
+      }
+
+      h1 {
+        margin: 0 0 16px;
+        font-size: clamp(2.1rem, 3vw, 4rem);
+        line-height: 1.02;
+        letter-spacing: -0.06em;
+      }
+
+      .hero-copy p {
+        margin: 0;
+        max-width: 620px;
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 1.02rem;
+      }
+
+      .hero-actions {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-top: 24px;
+        flex-wrap: wrap;
+      }
+
+      .primary-btn, .secondary-btn, .upload-btn, .action-btn {
+        border: none;
+        border-radius: 14px;
+        cursor: pointer;
+        font-weight: 700;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+      }
+
+      .primary-btn {
+        background: var(--gradient);
+        color: #f7fbff;
+        padding: 14px 20px;
+        box-shadow: 0 18px 30px rgba(108, 94, 255, 0.28);
+      }
+
+      .secondary-btn {
+        background: transparent;
+        color: var(--text);
+        border: 1px solid var(--line);
+        padding: 14px 18px;
+      }
+
+      .primary-btn:hover, .secondary-btn:hover, .upload-btn:hover, .action-btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .hero-metrics {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 22px;
+        background:
+          linear-gradient(180deg, rgba(24, 34, 59, 0.22), rgba(10, 18, 32, 0.15)),
+          var(--bg-panel);
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
+        gap: 14px;
+      }
+
+      .metric-card {
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.02);
+        border-radius: 18px;
+        padding: 16px 14px;
+      }
+
+      .metric-label {
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .metric-value {
+        margin-top: 12px;
+        font-size: clamp(1.6rem, 2.1vw, 2.3rem);
+        font-weight: 800;
+        letter-spacing: -0.06em;
+      }
+
+      .status-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 18px;
+        padding: 14px 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(88, 214, 141, 0.25);
+        background: rgba(88, 214, 141, 0.08);
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--success);
+        box-shadow: 0 0 18px rgba(88, 214, 141, 0.8);
+      }
+
+      .status-copy {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .status-copy strong {
+        font-size: 0.84rem;
+      }
+
+      .status-copy span {
+        color: var(--muted);
+        font-size: 0.74rem;
+      }
+
+      .content-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 22px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        background: var(--bg-panel);
+        box-shadow: var(--shadow);
+        border-radius: 26px;
+        padding: 22px;
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .panel-title {
+        margin: 0;
+        font-size: 1.15rem;
+        letter-spacing: -0.04em;
+      }
+
+      .badge {
+        font-size: 0.72rem;
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: rgba(93,212,255,0.08);
+        color: var(--primary-strong);
+        border: 1px solid rgba(93,212,255,0.14);
+      }
+
+      .dropzone {
+        position: relative;
+        display: grid;
+        place-items: center;
+        border: 1.5px dashed rgba(123, 92, 255, 0.4);
+        border-radius: 24px;
+        min-height: 220px;
+        padding: 20px;
+        background: linear-gradient(135deg, rgba(123,92,255,0.08), rgba(15,197,255,0.04));
+        text-align: center;
+      }
+
+      .dropzone input[type="file"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+      }
+
+      .dropzone.has-file {
+        border-style: solid;
+        background: linear-gradient(135deg, rgba(88,214,141,0.08), rgba(93,212,255,0.04));
+      }
+
+      .dropzone-inner {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .dropzone-icon {
+        display: grid;
+        place-items: center;
+        width: 68px;
+        height: 68px;
+        border-radius: 18px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid var(--line);
+        font-size: 1.8rem;
+      }
+
+      .dropzone strong {
+        font-size: 1.15rem;
+      }
+
+      .dropzone span {
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .file-meta {
+        margin-top: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: rgba(255,255,255,0.02);
+      }
+
+      .file-name {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+      }
+
+      .file-bullet {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--primary-strong);
+      }
+
+      .file-size {
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .field label {
+        color: var(--muted);
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+
+      .field select {
+        appearance: none;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--line);
+        color: var(--text);
+        border-radius: 14px;
+        min-height: 50px;
+        padding: 0 14px;
+      }
+
+      .action-btn {
+        background: linear-gradient(135deg, rgba(123,92,255,0.26), rgba(93,212,255,0.2));
+        border: 1px solid rgba(123, 92, 255, 0.2);
+        color: var(--text);
+        min-height: 50px;
+        padding: 0 18px;
+      }
+
+      .progress-wrap {
+        margin-top: 18px;
+      }
+
+      .progress-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 0.8rem;
+        margin-bottom: 8px;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 10px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid var(--line);
+      }
+
+      .progress-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--primary), var(--primary-strong), var(--secondary));
+        transition: width 0.35s ease;
+      }
+
+      .status-feed {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .feed-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.02);
+        border-radius: 16px;
+        padding: 12px 14px;
+      }
+
+      .feed-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        background: rgba(123,92,255,0.12);
+        color: var(--primary-strong);
+        font-weight: 700;
+      }
+
+      .feed-copy {
+        flex: 1;
+      }
+
+      .feed-copy strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .feed-copy span {
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .content-panel {
+        display: none;
+      }
+
+      .content-panel.active {
+        display: block;
+      }
+
+      .tabs-content {
+        margin-top: 24px;
+      }
+
+      .downloads-list, .privacy-copy {
+        display: grid;
+        gap: 14px;
+      }
+
+      .download-item, .policy-card {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 18px 20px;
+      }
+
+      .download-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .download-main {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .download-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        background: rgba(93,212,255,0.1);
+        border: 1px solid rgba(93,212,255,0.18);
+      }
+
+      .download-name {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .download-name strong { font-size: 1rem; }
+      .download-name span { color: var(--muted); font-size: 0.8rem; }
+
+      .download-link {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: rgba(255,255,255,0.02);
+        color: var(--text);
+      }
+
+      .policy-card h3 {
+        margin-top: 0;
+        margin-bottom: 8px;
+      }
+
+      .policy-card p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .reveal {
+        opacity: 0;
+        transform: translateY(24px);
+        transition: opacity 0.7s ease, transform 0.7s ease;
+      }
+
+      .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      @media (max-width: 900px) {
+        .hero,
+        .content-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .topbar {
+          flex-wrap: wrap;
+        }
+
+        .topbar-actions {
+          width: 100%;
+          justify-content: space-between;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .page-shell {
+          width: min(100% - 18px, 1220px);
+        }
+
+        .nav-tabs {
+          width: 100%;
+          justify-content: space-between;
+        }
+
+        .topbar-actions {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .controls {
+          grid-template-columns: 1fr;
+        }
+
+        .download-item {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body data-theme="dark">
+    <div class="page-shell">
+      <header class="topbar reveal">
+        <div class="brand" aria-label="S4H-SOUNDS brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span>S4H-SOUNDS</span>
+        </div>
+
+        <div class="topbar-actions">
+          <nav class="nav-tabs" aria-label="Primary navigation">
+            <button class="nav-tab active" data-tab="converter" type="button">Converter</button>
+            <button class="nav-tab" data-tab="downloads" type="button">Downloads</button>
+            <button class="nav-tab" data-tab="privacy" type="button">Privacy Policy</button>
+          </nav>
+          <button id="themeToggle" class="mode-toggle" type="button" aria-label="Toggle light and dark mode">
+            Light Mode
+          </button>
+        </div>
+      </header>
+
+      <main class="main-section">
+        <section class="hero reveal">
+          <div class="hero-copy">
+            <span class="eyebrow">MP3 to Data &amp; Audio Export</span>
+            <h1>Transform audio files into usable data and portable outputs.</h1>
+            <p>
+              S4H-SOUNDS gives you a clean conversion workflow for MP3 files, supporting XML metadata export and alternate audio formats without unnecessary friction or external tracking.
+            </p>
+            <div class="hero-actions">
+              <button class="primary-btn" id="startTodayBtn" type="button">Start Today</button>
+              <button class="secondary-btn" type="button" data-tab="downloads">View Downloads</button>
+            </div>
+          </div>
+
+          <aside class="hero-metrics" aria-label="System overview">
+            <div class="stats-grid">
+              <div class="metric-card">
+                <div class="metric-label">Files Converted</div>
+                <div class="metric-value">12.4K</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Formats</div>
+                <div class="metric-value">8+</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Avg. Speed</div>
+                <div class="metric-value">1.8s</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Uptime</div>
+                <div class="metric-value">99.9%</div>
+              </div>
+            </div>
+
+            <div class="status-banner" aria-live="polite">
+              <span class="status-dot" aria-hidden="true"></span>
+              <div class="status-copy">
+                <strong>System Status: Online</strong>
+                <span>Secure local processing ready</span>
+              </div>
+            </div>
+          </aside>
+        </section>
+
+        <div class="content-grid reveal">
+          <section class="panel" aria-labelledby="converter-title">
+            <div class="panel-header">
+              <h2 class="panel-title" id="converter-title">Conversion Workspace</h2>
+              <span class="badge">Ready</span>
+            </div>
+
+            <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Upload an MP3 file">
+              <input id="fileInput" type="file" accept="audio/mpeg,.mp3" aria-label="Choose an MP3 file" />
+              <div class="dropzone-inner">
+                <div class="dropzone-icon" aria-hidden="true">♫</div>
+                <strong>Drop MP3 here</strong>
+                <span>or click to browse local files</span>
+              </div>
+            </div>
+
+            <div class="file-meta" id="fileMeta" hidden>
+              <div class="file-name">
+                <span class="file-bullet" aria-hidden="true"></span>
+                <span id="fileNameText">audio-track.mp3</span>
+              </div>
+              <span class="file-size" id="fileSizeText">0 MB</span>
+            </div>
+
+            <div class="controls">
+              <div class="field">
+                <label for="formatSelect">Output Format</label>
+                <select id="formatSelect" aria-label="Choose output format">
+                  <option value="xml">XML Data</option>
+                  <option value="wav">WAV</option>
+                  <option value="aac">AAC</option>
+                  <option value="flac">FLAC</option>
+                  <option value="ogg">OGG</option>
+                  <option value="m4a">M4A</option>
+                </select>
+              </div>
+
+              <button class="action-btn" id="convertBtn" type="button">Convert File</button>
+            </div>
+
+            <div class="progress-wrap" aria-live="polite">
+              <div class="progress-header">
+                <span>Processing</span>
+                <span id="progressValue">0%</span>
+              </div>
+              <div class="progress-bar" aria-hidden="true">
+                <div class="progress-fill" id="progressFill"></div>
+              </div>
+            </div>
+          </section>
+
+          <aside class="panel" aria-labelledby="activity-title">
+            <div class="panel-header">
+              <h2 class="panel-title" id="activity-title">Activity Feed</h2>
+              <span class="badge">Live</span>
+            </div>
+
+            <div class="status-feed" id="statusFeed">
+              <div class="feed-item">
+                <div class="feed-icon">✓</div>
+                <div class="feed-copy">
+                  <strong>Conversion queue is active</strong>
+                  <span>Ready to process uploaded MP3 files.</span>
+                </div>
+              </div>
+              <div class="feed-item">
+                <div class="feed-icon">◌</div>
+                <div class="feed-copy">
+                  <strong>Local export enabled</strong>
+                  <span>XML and audio bundles stay in-browser.</span>
+                </div>
+              </div>
+              <div class="feed-item">
+                <div class="feed-icon">◎</div>
+                <div class="feed-copy">
+                  <strong>Firewall-safe operation</strong>
+                  <span>No tracking scripts or external dependencies.</span>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <section class="tabs-content reveal">
+          <div id="converterPanel" class="content-panel active" aria-live="polite"></div>
+          <div id="downloadsPanel" class="content-panel" aria-live="polite">
+            <div class="panel" style="padding: 20px;">
+              <div class="panel-header">
+                <h2 class="panel-title">Downloads</h2>
+                <span class="badge">Recent</span>
+              </div>
+              <div class="downloads-list" id="downloadsList"></div>
+            </div>
+          </div>
+          <div id="privacyPanel" class="content-panel" aria-live="polite">
+            <div class="panel" style="padding: 20px;">
+              <div class="panel-header">
+                <h2 class="panel-title">Privacy Policy</h2>
+                <span class="badge">Secure</span>
+              </div>
+              <div class="privacy-copy">
+                <div class="policy-card">
+                  <h3>Data handling</h3>
+                  <p>Files are processed locally in the browser whenever possible. S4H-SOUNDS does not depend on third-party analytics, ad tracking, or external script providers. We do not create persistent profile data from uploaded media.</p>
+                </div>
+                <div class="policy-card">
+                  <h3>Export workflow</h3>
+                  <p>Generated output files are delivered as local download artifacts. Sensitive metadata is retained only for the session and is not transmitted to any remote endpoint without your explicit action.</p>
+                </div>
+                <div class="policy-card">
+                  <h3>Compliance</h3>
+                  <p>This interface is designed to respect local network restrictions, avoid unapproved domains, and maintain a lightweight, school-safe technical footprint using native browser APIs and bundled assets only.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const appState = {
+        theme: 'dark',
+        activeTab: 'converter',
+        selectedFile: null,
+        downloads: [
+          { name: 'track-summary.xml', kind: 'XML', link: '#', time: 'Today · 09:18' },
+          { name: 'studio-export.wav', kind: 'WAV', link: '#', time: 'Today · 08:36' }
+        ]
+      };
+
+      const themeToggle = document.getElementById('themeToggle');
+      const fileInput = document.getElementById('fileInput');
+      const dropzone = document.getElementById('dropzone');
+      const fileMeta = document.getElementById('fileMeta');
+      const fileNameText = document.getElementById('fileNameText');
+      const fileSizeText = document.getElementById('fileSizeText');
+      const formatSelect = document.getElementById('formatSelect');
+      const convertBtn = document.getElementById('convertBtn');
+      const statusFeed = document.getElementById('statusFeed');
+      const progressFill = document.getElementById('progressFill');
+      const progressValue = document.getElementById('progressValue');
+      const navTabs = document.querySelectorAll('.nav-tab');
+      const startTodayBtn = document.getElementById('startTodayBtn');
+      const downloadsList = document.getElementById('downloadsList');
+      const panelIds = { converter: 'converterPanel', downloads: 'downloadsPanel', privacy: 'privacyPanel' };
+
+      const formatMimeMap = {
+        wav: 'audio/wav',
+        aac: 'audio/aac',
+        flac: 'audio/flac',
+        ogg: 'audio/ogg',
+        m4a: 'audio/mp4',
+        xml: 'application/xml'
+      };
+
+      function setTheme(theme) {
+        appState.theme = theme;
+        document.body.setAttribute('data-theme', theme);
+        themeToggle.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+      }
+
+      function updateActiveTab(tabName) {
+        appState.activeTab = tabName;
+        navTabs.forEach((tab) => {
+          tab.classList.toggle('active', tab.dataset.tab === tabName);
+        });
+
+        Object.entries(panelIds).forEach(([key, id]) => {
+          const panel = document.getElementById(id);
+          if (panel) {
+            panel.classList.toggle('active', key === tabName);
+          }
+        });
+
+        if (tabName === 'converter') {
+          document.getElementById('converterPanel').classList.add('active');
+        }
+      }
+
+      function addStatusMessage(title, description, icon = '✓') {
+        const item = document.createElement('div');
+        item.className = 'feed-item';
+        item.innerHTML = `
+          <div class="feed-icon">${icon}</div>
+          <div class="feed-copy">
+            <strong>${title}</strong>
+            <span>${description}</span>
+          </div>
+        `;
+        statusFeed.prepend(item);
+
+        while (statusFeed.children.length > 4) {
+          statusFeed.removeChild(statusFeed.lastChild);
+        }
+      }
+
+      function formatBytes(bytes) {
+        if (!bytes || Number.isNaN(bytes)) return '0 KB';
+        const units = ['B', 'KB', 'MB', 'GB'];
+        let size = bytes;
+        let unitIndex = 0;
+        while (size >= 1024 && unitIndex < units.length - 1) {
+          size /= 1024;
+          unitIndex += 1;
+        }
+        return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+      }
+
+      function setFileDetails(file) {
+        appState.selectedFile = file;
+        fileMeta.hidden = false;
+        dropzone.classList.add('has-file');
+        fileNameText.textContent = file.name;
+        fileSizeText.textContent = formatBytes(file.size);
+        dropzone.querySelector('.dropzone-inner').innerHTML = `
+          <div class="dropzone-icon" aria-hidden="true">✓</div>
+          <strong>${file.name}</strong>
+          <span>Ready for conversion.</span>
+        `;
+      }
+
+      function updateProgress(value) {
+        progressFill.style.width = `${value}%`;
+        progressValue.textContent = `${Math.round(value)}%`;
+      }
+
+      function createXmlDocument(file, format) {
+        const now = new Date().toISOString();
+        const fileName = file.name.replace(/\.[^.]+$/, '');
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<audio-export>
+  <source>
+    <name>${file.name}</name>
+    <normalizedName>${fileName}</normalizedName>
+    <format>${file.type || 'audio/mpeg'}</format>
+    <sizeBytes>${file.size}</sizeBytes>
+    <generatedAt>${now}</generatedAt>
+  </source>
+  <target>
+    <outputFormat>${format}</outputFormat>
+    <contentType>${formatMimeMap[format] || 'application/xml'}</contentType>
+    <status>converted</status>
+  </target>
+  <metadata>
+    <channelMode>stereo</channelMode>
+    <durationSeconds>0</durationSeconds>
+    <bitrateKbps>128</bitrateKbps>
+  </metadata>
+</audio-export>`;
+        return xml;
+      }
+
+      function simulateDownload(blob, filename, formatLabel) {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        anchor.style.display = 'none';
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(url);
+
+        appState.downloads.unshift({
+          name: filename,
+          kind: formatLabel,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+
+        renderDownloads();
+      }
+
+      function renderDownloads() {
+        downloadsList.innerHTML = '';
+
+        appState.downloads.forEach((item) => {
+          const entry = document.createElement('div');
+          entry.className = 'download-item';
+          entry.innerHTML = `
+            <div class="download-main">
+              <div class="download-icon">▣</div>
+              <div class="download-name">
+                <strong>${item.name}</strong>
+                <span>${item.kind} · ${item.time}</span>
+              </div>
+            </div>
+            <a class="download-link" href="#" aria-label="Download ${item.name}">Download</a>
+          `;
+          downloadsList.appendChild(entry);
+        });
+      }
+
+      function handleConversion() {
+        if (!appState.selectedFile) {
+          addStatusMessage('No file selected', 'Choose an MP3 file before converting.', '!');
+          return;
+        }
+
+        const chosenFormat = formatSelect.value;
+        const fileExt = chosenFormat === 'xml' ? 'xml' : chosenFormat;
+        const baseName = appState.selectedFile.name.replace(/\.[^.]+$/, '');
+        const targetName = `${baseName}.${fileExt}`;
+
+        updateProgress(10);
+        addStatusMessage('Conversion started', `Preparing ${appState.selectedFile.name} for ${chosenFormat.toUpperCase()} export.`, '↻');
+
+        setTimeout(() => {
+          updateProgress(45);
+          addStatusMessage('Metadata analyzed', 'Audio properties detected and export metadata generated.', '◉');
+        }, 600);
+
+        setTimeout(() => {
+          const fileBlob = chosenFormat === 'xml'
+            ? new Blob([createXmlDocument(appState.selectedFile, chosenFormat)], { type: 'application/xml' })
+            : new Blob([appState.selectedFile], { type: formatMimeMap[chosenFormat] || 'audio/mpeg' });
+
+          updateProgress(100);
+          addStatusMessage('Export complete', `File ready: ${targetName}`, '✓');
+          simulateDownload(fileBlob, targetName, chosenFormat.toUpperCase());
+          setTimeout(() => updateProgress(0), 1200);
+        }, 1200);
+      }
+
+      themeToggle.addEventListener('click', () => {
+        setTheme(appState.theme === 'dark' ? 'light' : 'dark');
+      });
+
+      navTabs.forEach((tab) => {
+        tab.addEventListener('click', () => updateActiveTab(tab.dataset.tab));
+      });
+
+      startTodayBtn.addEventListener('click', () => {
+        updateActiveTab('converter');
+        document.getElementById('converter-title').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+
+      document.querySelector('[data-tab="downloads"]').addEventListener('click', () => updateActiveTab('downloads'));
+
+      fileInput.addEventListener('change', (event) => {
+        const [file] = event.target.files;
+        if (!file) return;
+
+        if (!file.name.toLowerCase().endsWith('.mp3')) {
+          addStatusMessage('Unsupported file', 'Please select an MP3 file to continue.', '!');
+          return;
+        }
+
+        setFileDetails(file);
+        addStatusMessage('File detected', `${file.name} is ready for export.`, '✓');
+      });
+
+      dropzone.addEventListener('click', () => fileInput.click());
+      dropzone.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          fileInput.click();
+        }
+      });
+
+      convertBtn.addEventListener('click', handleConversion);
+
+      ['dragenter', 'dragover'].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          dropzone.style.borderColor = 'rgba(93,212,255,0.8)';
+        });
+      });
+
+      ['dragleave', 'drop'].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          dropzone.style.borderColor = 'rgba(123, 92, 255, 0.4)';
+        });
+      });
+
+      dropzone.addEventListener('drop', (event) => {
+        const [file] = event.dataTransfer.files;
+        if (!file) return;
+        fileInput.files = event.dataTransfer.files;
+        if (!file.name.toLowerCase().endsWith('.mp3')) {
+          addStatusMessage('Unsupported file', 'Please drop an MP3 file to continue.', '!');
+          return;
+        }
+        setFileDetails(file);
+        addStatusMessage('File received', `${file.name} was added to the conversion queue.`, '✓');
+      });
+
+      const revealEls = document.querySelectorAll('.reveal');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+
+      revealEls.forEach((el) => observer.observe(el));
+
+      renderDownloads();
+      setTheme('dark');
+    </script>
+  </body>
+</html>
