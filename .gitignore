@@ -1,0 +1,7 @@
+data/
+work/
+outputs/
+__pycache__/
+*.pyc
+node_modules/
+.env
