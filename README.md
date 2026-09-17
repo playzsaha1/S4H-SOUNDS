@@ -1,70 +1,64 @@
 # S4H-SOUNDS
 
-An MP3 workspace with the original dark purple/blue visual identity, local WAV encoding and XML metadata exports.
+Local MP3-to-WAV conversion and XML metadata export, with anonymous global conversion and download-request totals.
 
-## Run
+## Vercel deployment
 
-Requires Python 3.9+; no third-party server dependencies.
+The site uses static browser assets plus five Python Vercel Functions under `api/`. `vercel.json` supplies direct-route rewrites for `/app`, `/app/downloads` and `/privacy`. The build copies only the four public assets into `public/`; local databases, tests, server source and secrets are not published as static files.
+
+**A database connection is required for real global stats.** Pushing the code alone cannot provision storage. SQLite and in-memory tokens are for local development only; they must never back production serverless counters.
+
+1. Open the **s4-h-sounds** project in Vercel → **Storage** → **Create Database**, then choose **Upstash Redis** from the marketplace.
+2. Create/select a database and connect it to this project's **Production** environment. Review the provider's plan and terms before confirming.
+3. Check that Vercel added the server-only environment variables `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`. The adapter also accepts the integration's `KV_REST_API_URL` and `KV_REST_API_TOKEN` names. Use the read/write token, not the read-only token. Do not put credentials in browser code, Git, or chat.
+4. Redeploy the latest Git commit. The default allowed origin is `https://s4h-sounds.vercel.app`; set `PUBLIC_ORIGIN` if using a different canonical domain.
+5. Open `/api/stats`. A new connected database returns `{"total":0,"downloads":0}`. The landing page then displays real numbers. A missing/unreachable database returns **503**, not an invented zero.
+
+Vercel framework preset is **Other** (`framework: null`). Build command and output directory come from `vercel.json`; remove conflicting project overrides. The function runtime requires no external Python packages. Preview deployments should use a separate database and their own `PUBLIC_ORIGIN` to avoid changing production counts. If migrating an existing live deployment, transfer its verified aggregate totals before switching storage; never seed invented usage.
+
+The function adapter uses Upstash's HTTPS REST API. Only aggregate totals have no expiry. Random per-export deduplication tokens expire after 30 minutes; a global rate-limit key expires after 60 seconds. Lua scripts atomically update tokens and totals together, so simultaneous requests and independent Vercel instances cannot double-count the same event. This temporary anonymous abuse-protection state contains no files, filenames, IPs or device identities.
+
+## Local development
 
 ```sh
 python3 server.py
 ```
 
-Open http://localhost:8000. The server handles direct navigation and refresh at `/`, `/privacy`, `/app`, and `/app/downloads`. Serve through this server, not a static file server, to enable the counter and route fallback.
+Open http://localhost:8000. Local mode uses `data/counter.sqlite3` and a single process with in-memory tokens. Local data is ignored by Git and Vercel and never uploaded. Local tokens expire on restart; cloud tokens are shared across instances until their TTL expires.
 
-## Outputs and state
+For a persistent non-Vercel server, set `HOST`, `PORT`, `PUBLIC_ORIGIN`, and `COUNTER_DB` as needed, run one instance, and place the standard-library server behind a production HTTPS reverse proxy. Do not expose the development HTTP server directly to the internet.
 
-- WAV: browser-decoded MP3 → real 16-bit PCM WAV, encoded in a Web Worker.
-- XML: escaped filename, actual file size, and measured decoded duration/channels/sample rate/sample count. Decoded sample rate is the browser AudioContext rate, not necessarily the source rate. No invented bitrate.
-- AAC, FLAC and OGG are visibly disabled until real encoders are implemented.
-- Input limit: 50 MB. Decoded limit: 20 minutes / 256 MB PCM. Browsers may still reject files on memory-constrained devices.
-- Up to ten recent outputs remain in tab memory within a 128 MB budget (the latest output is always retained), with real blob download links. Refresh closes this session. No audio or download metadata goes to the server.
-- Cancel discards output and never submits completion; browser decoding cannot be interrupted, so controls remain locked until it settles.
+## Conversion behavior
 
-## Counter design and limits
+- WAV: MP3 decoded by the browser, then genuinely encoded into 16-bit PCM WAV in a worker.
+- XML: escaped file details and measured decoded audio properties; metadata, not playable audio. The decoded sample rate is the browser AudioContext rate.
+- AAC, FLAC and OGG are disabled and labelled Coming soon.
+- Limits: 50 MB MP3; decoded audio up to 20 minutes / 256 MB. Memory-constrained browsers may reject files earlier.
+- Up to ten recent outputs remain in tab memory, within a 128 MB budget (the newest output is retained). Refreshing/closing clears the session. Download before leaving.
+- Cancellation discards output and never sends a completion. Browser decoding cannot be aborted, so controls remain locked until it settles.
 
-SQLite contains one row, initialized at zero: `aggregate(id=1, total, downloads)`. Only these two aggregate totals persist. Existing conversion totals migrate in place without resetting. No accounts, IP addresses, filenames, audio, sizes, per-conversion records or identifiers are stored in the database. Access logging is disabled in this server.
+## Counter API and privacy
 
-`GET /api/count` reads the total. `POST /api/ticket` with `{}` reserves a random token, held only in memory for 30 minutes. After a nonempty output is generated and a download link exists, the client sends `POST /api/complete` with only `{ "token": "…" }`. WAV conversions and XML exports both count. Failed/cancelled conversions never submit completion. Refresh/visits/download clicks never increment. Duplicate submissions of the same token return the count without changing it, including parallel requests. The client retries once with the same token when the response is lost.
+`GET /api/stats` returns the two global totals. `GET /api/count` provides the legacy conversion total. The public landing polls every 15 seconds while visible and refreshes when revisited or reconnected. Failure is shown explicitly, never masked with zero.
 
-Write endpoints require the configured exact Origin, same-origin Fetch Metadata, a custom application header, strict JSON schemas, and a 128-byte maximum body. Tokens are unguessable and single-use. Issuance is capped globally at 60 per minute by default, and at 2,000 live tokens. This avoids IP/device tracking. Limits may cause legitimate completions to be omitted under heavy load; conversion still works. Old tokens are rejected after expiry or a restart, never replayed as fresh completions. Aggregate counts persist across restarts.
+`POST /api/ticket` accepts only `{}` and reserves an unguessable token. `POST /api/complete` accepts only `{ "token": "…" }` after a nonempty output and download link exist. WAV and XML outputs both count. Uploads, visits, refreshes, failures and cancellations do not count. The client retries a lost acknowledgement once using the same token.
 
-**Security boundary:** a server cannot prove that untrusted browser code actually converted audio without receiving the audio or using an independent attestation system. Same-origin controls prevent ordinary cross-site browser calls, but scripts outside browsers can imitate headers and request tokens. This is a bounded, best-effort anonymous completion counter, not fraud-proof accounting. Limits cap abuse; they cannot establish user identity. Tokens contain no audio-derived data. Do not describe this as an authenticated or tamper-proof counter.
+The first Download click sends `POST /api/download` with that same token, after completion acknowledgement. At most one download request counts per generated output. Repeated clicks or concurrent retries cannot increment again. Download requests are not proof that a file was saved. Expired tokens, offline completions and failed confirmations may be omitted; local downloads remain usable.
 
-Only one server process/instance may issue and consume tokens; SQLite updates are serialized and atomic within that instance. A crash between committing an increment and sending the response does not create a second increment because all pre-restart tokens become invalid. Some offline/unconfirmed completions can be absent; the UI reports this instead of fabricating a value or blocking downloads.
+Write endpoints enforce the exact configured Origin, same-origin Fetch Metadata, a custom application header, strict JSON schemas and a 128-byte request-body limit. A shared global issuance limit defaults to 60 tickets per minute (`COUNTER_TICKETS_PER_MINUTE`). No IP-based tracking is used.
 
-## Hosting
+The persistent totals contain only conversion and download counts. Temporary anonymous token/limiter keys expire automatically. Audio, filenames, sizes, metadata and user identities are never included in counter requests. Theme preference is saved only in the browser. Application access logging is disabled; hosting/provider logs are separate and must be reviewed/configured by the operator.
 
-No hosting provider or database was previously configured. This implementation is ready to run on a Python-capable host with a **persistent disk**, behind a production HTTPS reverse proxy; it is not deployed automatically. GitHub Pages alone cannot execute this backend.
-
-```sh
-HOST=127.0.0.1 PORT=8000 PUBLIC_ORIGIN=https://your-domain.example \
-COUNTER_DB=/persistent/s4h/counter.sqlite3 python3 server.py
-```
-
-Run exactly one instance. Preserve the database when deploying. Bind to a private interface behind a hardened reverse proxy (the standard-library HTTP server is not a public production edge). Configure proxy connection limits, body limits and timeouts; disable access/request logging at both proxy and hosting layers to satisfy the no-IP-storage policy. No audio upload endpoint exists. Restrict external access to the Python port. Set `PUBLIC_ORIGIN` to the exact browser-facing origin; arbitrary Host/X-Forwarded headers are not trusted. `COUNTER_TICKETS_PER_MINUTE` changes the overall issuance limit, with no per-user or per-IP state.
-
-A provider migration must preserve the one-row total and move token consumption/rate limits into shared atomic storage before scaling beyond one instance. Do not use ephemeral serverless disks for the persistent total.
+**Security boundary:** the server cannot prove a local conversion happened without receiving audio or independent attestation. Non-browser scripts can imitate application headers. This is rate-limited anonymous telemetry, not fraud-proof accounting. Only app-generated outputs trigger counting in the normal workflow.
 
 ## Tests
 
 ```sh
+python3 -m pip install -r requirements-dev.txt
 python3 -m unittest discover -s tests -p 'test_*.py' -v
 node --test tests/conversion.cjs
 ```
 
-`tests/browser.cjs` uses Playwright and a generated real MP3 fixture (create using the command noted in that file). It exercises routes, privacy/app navigation separation, theme, empty downloads, invalid and corrupt files, WAV/XML output contents, actual downloads, cancellations, duplicate submissions, offline counter behavior and mobile overflow. Run against an isolated test database, never the production counter.
+The tests cover local persistence and migration, atomic Lua scripts with a Redis emulator, independent function instances, duplicate requests, expiry, rate limiting, Vercel configuration/errors, real WAV encoding, escaped XML, cancellation, repeat clicks and counter outages. Without `fakeredis[lua]`, shared-Redis script tests are explicitly skipped.
 
-### Validation in this workspace
-
-- Passed 12 Python tests covering persistent aggregate storage, zero initialization, atomic updates, duplicate/parallel requests, expiry, rate limits, strict schemas, origin restrictions and direct routes.
-- Passed 8 Node tests covering real WAV encoding, escaped XML, cancellation, failures, repeated clicks, lost acknowledgements and offline counter behavior. Lifecycle tests use an injected decoder; real MP3 decoding was checked separately in the browser.
-- In-app browser: tested landing → privacy → home → app, direct route reloads, actual MP3 decoding into WAV/XML, a successful WAV download action, corrupt and invalid inputs, unchanged count after failure/refresh, real recent-download entries, session clearing, theme persistence, and all four routes at 320/375/768/1440 px without horizontal overflow. No browser console errors observed.
-- The full standalone Playwright suite is included but could not run in this sandbox: the installed Chrome process was prevented from launching. Safari/Firefox, touch drag-and-drop, and the automated end-to-end download-byte assertions remain unverified here. The encoder's WAV bytes were validated in the Node tests.
-- Browser tests used a separate database in `work/`; production starts with an independent empty database.
-
-### Landing-page live statistics
-
-The public landing page reads `/api/stats` immediately and every 15 seconds while visible, plus when the tab becomes visible or reconnects. It displays completed conversions (including XML exports) and download requests. Unavailable data shows a dash and an explicit unavailable status, never a fabricated zero.
-
-A first Download click for a generated output sends `/api/download` with its existing completion token, after completion is acknowledged. The server requires a completed, unexpired token and increments downloads at most once per generated output, even across concurrent/retried requests or the two UI links. Repeat downloads of the same output do not increment. This counts download requests, not confirmed disk saves. Downloads still work when counters are unavailable. Requests after token expiry/restart or an unconfirmed conversion are omitted. Only the aggregate download count is persisted; no filenames, audio, or user details are sent. The same origin restrictions and token issuance limits protect both counters.
+`tests/browser.cjs` is an additional Playwright suite. Generate its MP3 fixture as documented in the file, and run against an isolated test database. The full standalone suite could not run in the desktop sandbox because Chrome launching was blocked; interactive in-app browser checks verified real WAV/XML exports, download actions, route navigation, theme persistence and mobile overflow. Safari/Firefox and the full automated download-byte assertions remain unverified.

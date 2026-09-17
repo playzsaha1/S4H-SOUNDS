@@ -1,0 +1,8 @@
+.git
+work
+outputs
+data
+tests
+public
+__pycache__
+.env*

@@ -83,6 +83,14 @@ class Counter:
 
 
 class Handler(BaseHTTPRequestHandler):
+    @property
+    def counter(self):
+        return self.server.counter
+
+    @property
+    def origin(self):
+        return self.server.origin
+
     # Do not record IP addresses, paths, headers, or request bodies in access logs.
     def log_message(self, *args):
         pass
@@ -115,7 +123,9 @@ class Handler(BaseHTTPRequestHandler):
         path = urlsplit(self.path).path
         if path in ('/api/count', '/api/stats'):
             try:
-                self.send(200, self.server.counter.stats() if path == '/api/stats' else {'total': self.server.counter.total()})
+                self.send(200, self.counter.stats() if path == '/api/stats' else {'total': self.counter.total()})
+            except Rejected as error:
+                self.send(error.status, {'error': error.message})
             except sqlite3.Error:
                 self.send(503, {'error': 'Counter unavailable.'})
             return
@@ -136,7 +146,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path not in ('/api/ticket', '/api/complete', '/api/download'):
                 raise Rejected(404, 'Not found.')
             # Fixed configured origin; never trust arbitrary Host or forwarded headers.
-            if self.headers.get('Origin') != self.server.origin:
+            if self.headers.get('Origin') != self.origin:
                 raise Rejected(403, 'Same-origin requests required.')
             if self.headers.get('Sec-Fetch-Site') != 'same-origin' or self.headers.get('X-S4H-Request') != 'conversion':
                 raise Rejected(403, 'Application request required.')
@@ -157,14 +167,14 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == '/api/ticket':
                 if data:
                     raise Rejected(400, 'Ticket requests accept no data.')
-                self.send(200, {'token': self.server.counter.ticket()})
+                self.send(200, {'token': self.counter.ticket()})
             else:
                 if set(data) != {'token'} or not isinstance(data['token'], str) or len(data['token']) != 43:
                     raise Rejected(400, 'Only a completion token is accepted.')
                 if self.path == '/api/download':
-                    self.send(200, self.server.counter.download(data['token']))
+                    self.send(200, self.counter.download(data['token']))
                 else:
-                    self.send(200, {'total': self.server.counter.complete(data['token'])})
+                    self.send(200, {'total': self.counter.complete(data['token'])})
         except Rejected as error:
             self.send(error.status, {'error': error.message})
         except (sqlite3.Error, OSError):
