@@ -8,6 +8,11 @@
     { "src": "api/*.py", "use": "@vercel/python" }
   ],
   "rewrites": [
+    { "source": "/api/stats", "destination": "/api/stats.py" },
+    { "source": "/api/count", "destination": "/api/count.py" },
+    { "source": "/api/ticket", "destination": "/api/ticket.py" },
+    { "source": "/api/complete", "destination": "/api/complete.py" },
+    { "source": "/api/download", "destination": "/api/download.py" },
     { "source": "/app", "destination": "/index.html" },
     { "source": "/app/downloads", "destination": "/index.html" },
     { "source": "/privacy", "destination": "/index.html" }

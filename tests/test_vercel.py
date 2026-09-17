@@ -109,6 +109,14 @@ class VercelHTTPTests(unittest.TestCase):
         self.assertEqual(self.request('/server.py')[0], 405)
         self.assertEqual(self.request('/api/ticket')[0], 405)
 
+    def test_builder_paths_are_normalized(self):
+        with patch('backend.vercel_handler.RedisCounter') as factory:
+            factory.return_value.stats.return_value = {'total': 12, 'downloads': 7}
+            self.assertEqual(self.request('/api/stats.py')[0:2],
+                             (200, {'total': 12, 'downloads': 7}))
+            factory.return_value.ticket.return_value = 'test-token'
+            self.assertEqual(self.request('/api/ticket.py', {})[0], 200)
+
     def test_read_uses_shared_store_and_no_cache(self):
         with patch('backend.vercel_handler.RedisCounter') as factory:
             factory.return_value.stats.return_value = {'total': 12, 'downloads': 7}
@@ -124,7 +132,12 @@ class ConfigurationTests(unittest.TestCase):
             {('index.html', '@vercel/static'), ('*.css', '@vercel/static'),
              ('*.js', '@vercel/static'), ('api/*.py', '@vercel/python')},
         )
-        self.assertEqual({rule['source'] for rule in config['rewrites']}, {'/app', '/app/downloads', '/privacy'})
+        self.assertEqual(
+            {rule['source']: rule['destination'] for rule in config['rewrites']},
+            {'/app': '/index.html', '/app/downloads': '/index.html',
+             '/privacy': '/index.html', **{f'/api/{name}': f'/api/{name}.py'
+             for name in ('stats', 'count', 'ticket', 'complete', 'download')}},
+        )
         for endpoint in ['stats', 'count', 'ticket', 'complete', 'download']:
             self.assertTrue((Path(__file__).resolve().parents[1] / 'api' / (endpoint + '.py')).is_file())
 
