@@ -4,7 +4,7 @@ Local MP3-to-WAV conversion and XML metadata export, with anonymous global conve
 
 ## Vercel deployment
 
-The site uses static browser assets plus five Python Vercel Functions under `api/`. `vercel.json` supplies direct-route rewrites for `/app`, `/app/downloads` and `/privacy`. The build copies only the four public assets into `public/`; local databases, tests, server source and secrets are not published as static files.
+The site uses static browser assets plus five Python Vercel Functions under `api/`. `vercel.json` explicitly builds the four public assets and all five functions, and supplies direct-route rewrites for `/app`, `/app/downloads` and `/privacy`. Local databases, tests, server source and secrets are not published as static files.
 
 **A database connection is required for real global stats.** Pushing the code alone cannot provision storage. SQLite and in-memory tokens are for local development only; they must never back production serverless counters.
 
@@ -14,7 +14,7 @@ The site uses static browser assets plus five Python Vercel Functions under `api
 4. Redeploy the latest Git commit. The default allowed origin is `https://s4h-sounds.vercel.app`; set `PUBLIC_ORIGIN` if using a different canonical domain.
 5. Open `/api/stats`. A new connected database returns `{"total":0,"downloads":0}`. The landing page then displays real numbers. A missing/unreachable database returns **503**, not an invented zero.
 
-Vercel framework preset is **Other** (`framework: null`). Build command and output directory come from `vercel.json`; remove conflicting project overrides. The function runtime requires no external Python packages. Preview deployments should use a separate database and their own `PUBLIC_ORIGIN` to avoid changing production counts. If migrating an existing live deployment, transfer its verified aggregate totals before switching storage; never seed invented usage.
+Vercel framework preset is **Other** (`framework: null`). The build rules come from `vercel.json`; clear conflicting project-level Build Command and Output Directory overrides. The function runtime requires no external Python packages. Preview deployments should use a separate database and their own `PUBLIC_ORIGIN` to avoid changing production counts. If migrating an existing live deployment, transfer its verified aggregate totals before switching storage; never seed invented usage.
 
 The function adapter uses Upstash's HTTPS REST API. Only aggregate totals have no expiry. Random per-export deduplication tokens expire after 30 minutes; a global rate-limit key expires after 60 seconds. Lua scripts atomically update tokens and totals together, so simultaneous requests and independent Vercel instances cannot double-count the same event. This temporary anonymous abuse-protection state contains no files, filenames, IPs or device identities.
 

@@ -1,8 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "python3 scripts/build_static.py",
-  "outputDirectory": "public",
+  "builds": [
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "*.css", "use": "@vercel/static" },
+    { "src": "*.js", "use": "@vercel/static" },
+    { "src": "api/*.py", "use": "@vercel/python" }
+  ],
   "rewrites": [
     { "source": "/app", "destination": "/index.html" },
     { "source": "/app/downloads", "destination": "/index.html" },

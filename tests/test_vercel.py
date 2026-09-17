@@ -119,7 +119,11 @@ class VercelHTTPTests(unittest.TestCase):
 class ConfigurationTests(unittest.TestCase):
     def test_routes_keep_api_separate_from_html(self):
         config = json.loads((Path(__file__).resolve().parents[1] / 'vercel.json').read_text())
-        self.assertEqual(config['outputDirectory'], 'public')
+        self.assertEqual(
+            {(build['src'], build['use']) for build in config['builds']},
+            {('index.html', '@vercel/static'), ('*.css', '@vercel/static'),
+             ('*.js', '@vercel/static'), ('api/*.py', '@vercel/python')},
+        )
         self.assertEqual({rule['source'] for rule in config['rewrites']}, {'/app', '/app/downloads', '/privacy'})
         for endpoint in ['stats', 'count', 'ticket', 'complete', 'download']:
             self.assertTrue((Path(__file__).resolve().parents[1] / 'api' / (endpoint + '.py')).is_file())
